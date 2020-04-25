@@ -53,7 +53,7 @@ def findPotion(min_v, max_v, search):
     })
 
 
-def add_weapon(name, stat, value, weight, type, is_unique, is_onehanded):
+def add_weapon(name, stat, value, weight, type, is_unique, is_onehanded, enchant1, enchant2):
     dict = {
         "name": name,
         "basic_attack": stat,
@@ -62,7 +62,47 @@ def add_weapon(name, stat, value, weight, type, is_unique, is_onehanded):
         "type": type,
         "is_unique": is_unique,
         "is_onehanded": is_onehanded,
-        "enchantments": [],
+        "enchantments": [enchant1, enchant2],
     }
     db.weapons.insert_one(dict)
     return 1
+
+
+def add_armor(name, stat, value, weight, type, is_unique, is_light):
+    dict = {
+        "name": name,
+        "basic_armor": stat,
+        "weight": weight,
+        "value": value,
+        "type": type,
+        "is_unique": is_unique,
+        "is_light": is_light,
+        "enchantments": [],
+    }
+    db.armor.insert_one(dict)
+    return 1
+
+
+def add_book(name, mana_cost, level, school_of_magic, description):
+    dict = {
+        "name": name,
+        "level": level,
+        "school_of_magic": school_of_magic,
+        "mana_cost": mana_cost,
+        "description": description
+    }
+    db.books.insert_one(dict)
+    return 1
+
+
+def add_potion(name, type_of_restoring, weight, value, effect):
+    dict ={
+        "name": name,
+        "type_of_restoring": type_of_restoring,
+        "weight": weight,
+        "value": value,
+        "effect": effect
+    }
+    db.potions.insert_one(dict)
+    return 1
+
