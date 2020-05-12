@@ -1,35 +1,36 @@
 import tkinter as tk
 from PIL import Image, ImageTk
-import database_files as db_func
-
+import database_functions as db_func
+import helping_functions as hp
+import exceptions as exc
 
 bg_color = "#717171"
 fg_color = "#eeeeee"
 font = ("Courier", 20)
 small_font = ("Courier", 14)
 
-#słownik przekształcający nazwy pól kolekcji do postaci czytelnej dla człowieka
+# słownik przekształcający nazwy pól kolekcji do postaci czytelnej dla człowieka
 labels = {
-            "name": "Nazwa",
-            "basic_attack": "Podstawowy atak",
-            "weight": "Waga",
-            "value": "Wartość",
-            "is_unique": "Czy unikalny",
-            "enchantments": "Efekty",
-            "enchantment": "Efekty",
-            "type": "Typ",
-            "is_onehanded": "Czy jednoręczny",
-            "basic_armor": "Podstawowa wartość zbroi",
-            "is_light": "Czy lekka",
-            "type_of_restoring": "Przywraca",
-            "effect": "Efekt",
-            "description": "Opis",
-            "level": "Poziom",
-            "mana_cost": "Koszt Many",
-            "school_of_magic": "Szkoła"
-        }
+    "name": "Nazwa",
+    "basic_attack": "Podstawowy atak",
+    "weight": "Waga",
+    "value": "Wartość",
+    "is_unique": "Czy unikalny",
+    "enchantments": "Efekty",
+    "enchantment": "Efekty",
+    "type": "Typ",
+    "is_onehanded": "Czy jednoręczny",
+    "basic_armor": "Podstawowa wartość zbroi",
+    "is_light": "Czy lekka",
+    "type_of_restoring": "Przywraca",
+    "effect": "Efekt",
+    "description": "Opis",
+    "level": "Poziom",
+    "mana_cost": "Koszt Many",
+    "school_of_magic": "Szkoła"
+}
 
-#główne okienko aplikacji
+# główne okienko aplikacji
 window = tk.Tk()
 window.title("Skyrim app")
 window.geometry("800x600+50+50")
@@ -39,9 +40,9 @@ load = Image.open("logo.png")
 render = ImageTk.PhotoImage(load)
 
 
-#ekran startowy
-def makeCanva():
-    deleteCanva()
+# ekran startowy
+def make_canva():
+    delete_canva()
     canva.create_image(380, 70, image=render)
     what_label = tk.Label(text="Czego dziś szukamy?", bg=bg_color, fg=fg_color, font=font)
     canva.create_window(400, 200, window=what_label)
@@ -65,11 +66,11 @@ def makeCanva():
     canva.create_window(700, 500, window=add_book)
 
 
-def deleteCanva():
+def delete_canva():
     canva.delete("all")
 
 
-def makeImage():
+def make_image():
     canva.create_image(380, 70, image=render)
 
 
@@ -85,7 +86,7 @@ spell_book_type = tk.StringVar(window)
 level_book_type = tk.StringVar(window)
 
 
-#obsługa checków Don't care
+# obsługa checków Don't care
 def get_statistic_entry_disable():
     if statistic_check.get() == 1:
         min_entry.config(state="disabled")
@@ -122,20 +123,43 @@ v_check = tk.Checkbutton(window, text="Don't care", variable=value_check, bg=bg_
 weight_check = tk.IntVar()
 w_check = tk.Checkbutton(window, text="Don't care", variable=weight_check, bg=bg_color,
                          command=get_weight_entry_disable)
-#koniec checków
 
 
-#funkcja przeskakująca po wszystkich dokumentach z danego query
+# koniec checków
+
+
+def make_edit_and_delete_buttons(what_kind_of, record):
+    if what_kind_of == "weapon":
+        edit_button = tk.Button(window, text="Edit this\n item", command=lambda: add_weapon_window(record))
+        delete_button = tk.Button(window, text="Delete this\n item", command=lambda: delete_weapon(record))
+    elif what_kind_of == "armor":
+        edit_button = tk.Button(window, text="Edit this\n item", command=lambda: add_armor_window(record))
+        delete_button = tk.Button(window, text="Delete this\n item", command=lambda: delete_armor(record))
+    elif what_kind_of == "potion":
+        edit_button = tk.Button(window, text="Edit this\n item", command=lambda: add_potion_window(record))
+        delete_button = tk.Button(window, text="Delete this\n item", command=lambda: delete_potion(record))
+    elif what_kind_of == "book":
+        edit_button = tk.Button(window, text="Edit this\n item", command=lambda: add_book_window(record))
+        delete_button = tk.Button(window, text="Delete this\n item", command=lambda: delete_book(record))
+    else:
+        raise exc.InvalidStateException("Brak przedmiotu o takim typie!")
+    canva.create_window(100, 100, window=edit_button)
+    canva.create_window(600, 100, window=delete_button)
+
+
+# funkcja przeskakująca po wszystkich dokumentach z danego query
 def show(what_kind_of, weapons, func):
-    deleteCanva()
-    makeImage()
+    delete_canva()
+    make_image()
     try:
         record = weapons.next()
         func(record)
         details_button = tk.Button(window, text="Next", command=lambda: show(what_kind_of, weapons, func))
         canva.create_window(450, 480, window=details_button)
+        make_edit_and_delete_buttons(what_kind_of, record)
     except StopIteration:
-        new_label = tk.Label(window, text="Nie ma więcej \nprzedmiotów pasujących \ndo Twoich wymagań", font=font, fg=fg_color,
+        new_label = tk.Label(window, text="Nie ma więcej \nprzedmiotów pasujących \ndo Twoich wymagań", font=font,
+                             fg=fg_color,
                              bg=bg_color)
         canva.create_window(400, 180, window=new_label)
     back_button = ""
@@ -148,8 +172,8 @@ def show(what_kind_of, weapons, func):
     canva.create_window(200, 500, window=back_button)
 
 
-#obłusga broni i zbroi
-def showDetails(one_weapon):
+# obłusga broni i zbroi
+def show_details(one_weapon):
     y_offset = 25
     offset_of_enchants = 0
     i = 0
@@ -167,20 +191,20 @@ def showDetails(one_weapon):
             for i, enchant in enumerate(one_weapon[label]):
                 offset_of_enchants = 1
                 new_label2 = tk.Label(window, text="{}".format(enchant), font=small_font, fg=fg_color,
-                                  bg=bg_color)
+                                      bg=bg_color)
                 canva.create_window(550, 180 + (idx + i + offset_of_enchants) * y_offset, window=new_label2)
             else:
-                offset_of_enchants += i+1
-                i+=1
+                offset_of_enchants += i + 1
+                i += 1
             if i == 0:
                 new_label2 = tk.Label(window, text="Brak", font=small_font, fg=fg_color,
                                       bg=bg_color)
                 canva.create_window(450, 180 + (idx + i + offset_of_enchants) * y_offset, window=new_label2)
 
 
-def searchFor(what_kind_of):
-    deleteCanva()
-    makeImage()
+def search_for(what_kind_of):
+    delete_canva()
+    make_image()
     statistic = statistic_check.get()
     value = value_check.get()
     weight = weight_check.get()
@@ -202,30 +226,30 @@ def searchFor(what_kind_of):
         if max_weight.get() != "":
             max_w = int(max_weight.get())
 
-    print(min_v, max_v)
-
-    weapon = ""
+    weapon = None
     if what_kind_of == "weapon":
         weapon = db_func.findWeapon(min_s, max_s, min_v, max_v, min_w, max_w)
     elif what_kind_of == "armor":
         weapon = db_func.findArmor(min_s, max_s, min_v, max_v, min_w, max_w)
     if weapon is not None:
-        show(what_kind_of, weapon, showDetails)
+        show(what_kind_of, weapon, show_details)
     else:
         new_label = tk.Label(window, text="Brak takiego przedmiotu!", font=font, fg=fg_color, bg=bg_color)
         canva.create_window(380, 200, window=new_label)
 
     back_button = tk.Button(window, text="Back", command=lambda: make_choice_window(what_kind_of))
     canva.create_window(200, 500, window=back_button)
-#koniec broni i zbroi
 
 
-#obsługa książek
+# koniec broni i zbroi
 
-def showDetailsForBooks(book):
+
+# obsługa książek
+
+def show_details_for_books(book):
     y_offset = 25
-    deleteCanva()
-    makeImage()
+    delete_canva()
+    make_image()
     description_offset = 0
     for idx, label in enumerate(book):
         if label == "description":
@@ -239,9 +263,9 @@ def showDetailsForBooks(book):
             canva.create_window(450, 180 + idx * y_offset + description_offset, window=new_label2)
 
 
-def searchForBooks():
-    deleteCanva()
-    makeImage()
+def search_for_books():
+    delete_canva()
+    make_image()
     value = value_check.get()
     min_v, max_v = 0, 200000
     spell_school = spell_book_type.get()
@@ -258,7 +282,7 @@ def searchForBooks():
 
     books = db_func.findBook(min_v, max_v, spell_school, spell_level)
     if books is not None:
-        show("book", books, showDetailsForBooks)
+        show("book", books, show_details_for_books)
     else:
         new_label = tk.Label(window, text="Brak takiego przedmiotu!", font=font, fg=fg_color, bg=bg_color)
         canva.create_window(380, 200, window=new_label)
@@ -266,14 +290,15 @@ def searchForBooks():
     back_button = tk.Button(window, text="Back", command=lambda: make_book_window())
     canva.create_window(200, 500, window=back_button)
 
-#koniec książek
 
-#obsługa potionków
+# koniec książek
 
-def showDetailsForPotions(potion):
+# obsługa potionków
+
+def show_details_for_potions(potion):
     y_offset = 25
-    deleteCanva()
-    makeImage()
+    delete_canva()
+    make_image()
     label_offset = 0
     for idx, label in enumerate(potion):
         if label == "effect":
@@ -287,10 +312,9 @@ def showDetailsForPotions(potion):
             canva.create_window(450, 180 + (idx + label_offset) * y_offset, window=new_label2)
 
 
-
-def searchForPotions():
-    deleteCanva()
-    makeImage()
+def search_for_potions():
+    delete_canva()
+    make_image()
     value = value_check.get()
     min_v, max_v = 0, 200000
     type_search = ""
@@ -309,7 +333,7 @@ def searchForPotions():
 
     potions = db_func.findPotion(min_v, max_v, type_search)
     if potions is not None:
-        show("potion", potions, showDetailsForPotions)
+        show("potion", potions, show_details_for_potions)
     else:
         new_label = tk.Label(window, text="Brak takiego przedmiotu!", font=font, fg=fg_color, bg=bg_color)
         canva.create_window(380, 200, window=new_label)
@@ -317,80 +341,80 @@ def searchForPotions():
     back_button = tk.Button(window, text="Back", command=lambda: make_potion_window())
     canva.create_window(200, 500, window=back_button)
 
-#koniec potionków
+
+# koniec potionków
 
 
-def makeLabel(text):
+def make_label(text):
     return tk.Label(window, text=text, bg=bg_color, fg=fg_color)
 
 
-#widoki wyborów
+# widoki wyborów
 
 def make_choice_window(what_kind_of):
-    deleteCanva()
+    delete_canva()
     if what_kind_of == "weapon":
-        min_text = makeLabel("Min attack")
-        max_text = makeLabel("Max attack")
+        min_text = make_label("Min attack")
+        max_text = make_label("Max attack")
     elif what_kind_of == "armor":
-        min_text = makeLabel("Min armor")
-        max_text = makeLabel("Max armor")
+        min_text = make_label("Min armor")
+        max_text = make_label("Max armor")
 
     x = 200
     y = 300
     z = 400
-    makeImage()
+    make_image()
     label = ""
     if what_kind_of == "weapons":
         label = tk.Label(text="Weapons", bg=bg_color, fg=fg_color, font=font)
     elif what_kind_of == "armor":
         label = tk.Label(text="Armors", bg=bg_color, fg=fg_color, font=font)
-    min_v_text = makeLabel("Min value")
-    max_v_text = makeLabel("Max value")
-    min_w_text = makeLabel("Min weight")
-    max_w_text = makeLabel("Max weight")
-    search = tk.Button(window, text="Search!", command=lambda: searchFor(what_kind_of))
+    min_v_text = make_label("Min value")
+    max_v_text = make_label("Max value")
+    min_w_text = make_label("Min weight")
+    max_w_text = make_label("Max weight")
+    search = tk.Button(window, text="Search!", command=lambda: search_for(what_kind_of))
     canva.create_window(380, x - 40, window=label)
 
-
-    #main
+    # main
     canva.create_window(150, x, window=min_entry)
     canva.create_window(400, x, window=max_entry)
     canva.create_window(50, x, window=min_text)
     canva.create_window(300, x, window=max_text)
     canva.create_window(600, x, window=s_check)
 
-    #value
+    # value
     canva.create_window(150, y, window=min_value)
     canva.create_window(400, y, window=max_value)
     canva.create_window(50, y, window=min_v_text)
     canva.create_window(300, y, window=max_v_text)
     canva.create_window(600, y, window=v_check)
 
-    #weight
+    # weight
     canva.create_window(150, z, window=min_weight)
     canva.create_window(400, z, window=max_weight)
     canva.create_window(50, z, window=min_w_text)
     canva.create_window(300, z, window=max_w_text)
     canva.create_window(600, z, window=w_check)
 
-    #button Search
+    # button Search
     canva.create_window(600, 500, window=search)
 
-    #back button
-    back_button = tk.Button(window, text="Back", command=makeCanva)
+    # back button
+    back_button = tk.Button(window, text="Back", command=make_canva)
     canva.create_window(200, 500, window=back_button)
 
 
 def make_potion_window():
-    deleteCanva()
-    makeImage()
+    delete_canva()
+    make_image()
     x = 200
     y = 300
     z = 400
     label = tk.Label(text="Potions", bg=bg_color, fg=fg_color, font=font)
-    min_v_text = makeLabel("Min value")
-    max_v_text = makeLabel("Max value")
-    search = tk.Button(window, text="Search!", command=searchForPotions)
+    min_v_text = make_label("Min value")
+    max_v_text = make_label("Max value")
+    search = tk.Button(window, text="Search!", command=search_for_potions)
     canva.create_window(380, x - 40, window=label)
 
     potion_var.set("Potions")
@@ -405,28 +429,27 @@ def make_potion_window():
     canva.create_window(300, y, window=max_v_text)
     canva.create_window(600, y, window=v_check)
 
-    #dropdown
+    # dropdown
     canva.create_window(150, z, window=dropdown)
-
 
     # button Search
     canva.create_window(600, 500, window=search)
 
-    #back button
-    back_button = tk.Button(window, text="Back", command=makeCanva)
+    # back button
+    back_button = tk.Button(window, text="Back", command=make_canva)
     canva.create_window(200, 500, window=back_button)
 
 
 def make_book_window():
-    deleteCanva()
-    makeImage()
+    delete_canva()
+    make_image()
     x = 200
     y = 300
     z = 400
     label = tk.Label(text="Potions", bg=bg_color, fg=fg_color, font=font)
-    min_v_text = makeLabel("Koszt many min")
-    max_v_text = makeLabel("Koszt many max")
-    search = tk.Button(window, text="Search!", command=searchForBooks)
+    min_v_text = make_label("Koszt many min")
+    max_v_text = make_label("Koszt many max")
+    search = tk.Button(window, text="Search!", command=search_for_books)
     canva.create_window(380, x - 40, window=label)
 
     spell_book_type.set("Szkoła magii")
@@ -438,8 +461,8 @@ def make_book_window():
     level_dropdown = tk.OptionMenu(window, level_book_type, *level_type)
 
     # mana cost
-    canva.create_window(150, y, window=min_value)
-    canva.create_window(400, y, window=max_value)
+    canva.create_window(160, y, window=min_value)
+    canva.create_window(410, y, window=max_value)
     canva.create_window(50, y, window=min_v_text)
     canva.create_window(300, y, window=max_v_text)
     canva.create_window(600, y, window=v_check)
@@ -447,104 +470,326 @@ def make_book_window():
     # spell dropdown
     canva.create_window(150, z, window=spell_dropdown)
 
-    #level dropdown
+    # level dropdown
     canva.create_window(450, z, window=level_dropdown)
 
     # button Search
     canva.create_window(600, 500, window=search)
 
-    #back button
-    back_button = tk.Button(window, text="Back", command=makeCanva)
+    # back button
+    back_button = tk.Button(window, text="Back", command=make_canva)
     canva.create_window(200, 500, window=back_button)
 
-#koniec widoków wyborów
 
-#entersy dodawania
+# koniec widoków wyborów
+
+# entersy dodawania
 add_stat_entry = tk.Entry(window)
 add_value_entry = tk.Entry(window)
 add_weight_entry = tk.Entry(window)
 add_name_entry = tk.Entry(window)
 add_type_entry = tk.Entry(window)
-add_school_entry = tk.Entry(window)
-add_level_entry = tk.Entry(window)
-add_restore_entry = tk.Entry(window)
 add_description_entry = tk.Entry(window)
 add_is_light = tk.StringVar(window)
 add_is_light_dropdown = tk.OptionMenu(window, add_is_light, *["Tak", "Nie"])
 add_unique = tk.StringVar(window)
-add_is_unique_dropdown = tk.OptionMenu(window, add_unique,*["Tak", "Nie"])
+add_is_unique_dropdown = tk.OptionMenu(window, add_unique, *["Tak", "Nie"])
+add_enchant1_entry = tk.Entry(window)
+add_enchant2_entry = tk.Entry(window)
+add_restoring = tk.StringVar(window)
+add_restoring_dropdown = tk.OptionMenu(window, add_restoring, *["Restore Health", "Restore Mana", "Restore Stamina"])
+add_level = tk.StringVar(window)
+add_level_dropdown = tk.OptionMenu(window, add_level, *["Nowicjusz", "Uczeń", "Czeladnik", "Ekspert", "Mistrz"])
+add_school = tk.StringVar(window)
+add_school_dropdown = tk.OptionMenu(window, add_school,
+                                    *["Przywracanie", "Iluzja", "Przywołanie", "Zniszczenie", "Przemiana"])
 
-#widoki dodawania
-def add_weapon_window():
-    deleteCanva()
-    makeImage()
-    stat_text = makeLabel("Atak:")
+
+def reset_entries():
+    add_stat_entry.delete(0, 'end')
+    add_value_entry.delete(0, 'end')
+    add_weight_entry.delete(0, 'end')
+    add_name_entry.delete(0, 'end')
+    add_type_entry.delete(0, 'end')
+    add_description_entry.delete(0, 'end')
+    add_enchant1_entry.delete(0, 'end')
+    add_enchant2_entry.delete(0, 'end')
+
+
+def back_clear():
+    reset_entries()
+    make_canva()
+
+
+# widoki dodawania
+def add_weapon_window(weapon=None):
+    delete_canva()
+    make_image()
+    add_unique.set("Czy jest unikalny?")
+    canva.create_window(500, 500, window=add_is_unique_dropdown)
+    add_is_light.set("Czy jest jednoręczny?")
+    canva.create_window(500, 550, window=add_is_light_dropdown)
+    if weapon is not None:
+        add_stat_entry.insert(0, weapon["basic_attack"])
+        add_name_entry.insert(0, weapon["name"])
+        add_weight_entry.insert(0, weapon["weight"])
+        add_value_entry.insert(0, weapon["value"])
+        add_type_entry.insert(0, weapon["type"])
+        if len(weapon["enchantment"]) > 0:
+            add_enchant1_entry.insert(0, weapon["enchantment"][0])
+        if len(weapon["enchantment"]) > 1:
+            add_enchant2_entry.insert(0, weapon["enchantment"][1])
+        if weapon["is_unique"]:
+            add_unique.set("Unikalny")
+        else:
+            add_unique.set("Nie unikalny")
+        if weapon["is_onehanded"]:
+            add_is_light.set("Jednoręczny")
+        else:
+            add_is_light.set("Niejednoręczny")
+    stat_text = make_label("Atak:")
     canva.create_window(100, 200, window=stat_text)
     canva.create_window(200, 200, window=add_stat_entry)
-    name_text = makeLabel("Nazwa:")
+    name_text = make_label("Nazwa:")
     canva.create_window(100, 300, window=name_text)
     canva.create_window(200, 300, window=add_name_entry)
-    weight_text = makeLabel("Waga:")
+    weight_text = make_label("Waga:")
     canva.create_window(100, 400, window=weight_text)
     canva.create_window(200, 400, window=add_weight_entry)
-    value_text = makeLabel("Wartość:")
+    value_text = make_label("Wartość:")
     canva.create_window(100, 500, window=value_text)
     canva.create_window(200, 500, window=add_value_entry)
-    type_text = makeLabel("Typ:")
+    type_text = make_label("Typ:")
     canva.create_window(400, 200, window=type_text)
     canva.create_window(500, 200, window=add_type_entry)
+    enchant1_text = make_label("Zaklęcie 1:")
+    canva.create_window(400, 300, window=enchant1_text)
+    canva.create_window(500, 300, window=add_enchant1_entry)
+    enchant2_text = make_label("Zaklęcie 2:")
+    canva.create_window(400, 400, window=enchant2_text)
+    canva.create_window(500, 400, window=add_enchant2_entry)
+    if weapon is None:
+        add_button = tk.Button(window, text="Dodaj", command=lambda: add_weapon())
+    else:
+        add_button = tk.Button(window, text="Edytuj", command=lambda: add_weapon(1, weapon["_id"]))
+    canva.create_window(400, 500, window=add_button)
+    back_button = tk.Button(window, text="Back", command=lambda: back_clear())
+    canva.create_window(200, 550, window=back_button)
+
+
+def add_armor_window(armor=None):
+    delete_canva()
+    make_image()
+    if armor is not None:
+        add_stat_entry.insert(0, armor["basic_armor"])
+        add_name_entry.insert(0, armor["name"])
+        add_weight_entry.insert(0, armor["weight"])
+        add_value_entry.insert(0, armor["value"])
+        add_type_entry.insert(0, armor["type"])
+        if len(armor["enchantments"]) > 0:
+            add_enchant1_entry.insert(0, armor["enchantments"][0])
+        if len(armor["enchantments"]) > 1:
+            add_enchant2_entry.insert(0, armor["enchantments"][1])
+        if armor["is_unique"]:
+            add_unique.set("Unikalny")
+        else:
+            add_unique.set("Nie unikalny")
+        if armor["is_light"]:
+            add_is_light.set("Lekki")
+        else:
+            add_is_light.set("Ciężki")
+    stat_text = make_label("Wskaźnik pancerza:")
+    canva.create_window(100, 200, window=stat_text)
+    canva.create_window(200, 200, window=add_stat_entry)
+    name_text = make_label("Nazwa:")
+    canva.create_window(100, 300, window=name_text)
+    canva.create_window(200, 300, window=add_name_entry)
+    weight_text = make_label("Waga:")
+    canva.create_window(100, 400, window=weight_text)
+    canva.create_window(200, 400, window=add_weight_entry)
+    value_text = make_label("Wartość:")
+    canva.create_window(100, 500, window=value_text)
+    canva.create_window(200, 500, window=add_value_entry)
+    type_text = make_label("Typ:")
+    canva.create_window(400, 200, window=type_text)
+    canva.create_window(500, 200, window=add_type_entry)
+    enchant1_text = make_label("Zaklęcie 1:")
+    canva.create_window(400, 300, window=enchant1_text)
+    canva.create_window(500, 300, window=add_enchant1_entry)
+    enchant2_text = make_label("Zaklęcie 2:")
+    canva.create_window(400, 400, window=enchant2_text)
+    canva.create_window(500, 400, window=add_enchant2_entry)
     add_unique.set("Czy jest unikalny?")
-    canva.create_window(500, 300, window=add_is_unique_dropdown)
-    add_is_light.set("Czy jest jednoręczny?")
-    canva.create_window(500, 400, window=add_is_light_dropdown)
-    add_button = tk.Button(window, text="Dodaj", command=add_weapon)
-    canva.create_window(500, 500, window=add_button)
-    back_button = tk.Button(window, text="Back", command=makeCanva)
+    canva.create_window(500, 500, window=add_is_unique_dropdown)
+    add_is_light.set("Czy jest lekki?")
+    canva.create_window(500, 550, window=add_is_light_dropdown)
+    if armor is None:
+        add_button = tk.Button(window, text="Dodaj", command=lambda: add_armor())
+    else:
+        add_button = tk.Button(window, text="Edytuj", command=lambda: add_armor(1, armor["_id"]))
+    canva.create_window(400, 500, window=add_button)
+    back_button = tk.Button(window, text="Back", command=lambda: back_clear())
     canva.create_window(200, 550, window=back_button)
 
 
-def add_armor_window():
-    pass
+def add_potion_window(potion=None):
+    delete_canva()
+    make_image()
+    if potion is not None:
+        add_name_entry.insert(0, potion["name"])
+        add_weight_entry.insert(0, potion["weight"])
+        add_value_entry.insert(0, potion["value"])
+        add_type_entry.insert(0, potion["effect"])
+    name_text = make_label("Nazwa:")
+    canva.create_window(100, 200, window=name_text)
+    canva.create_window(200, 200, window=add_name_entry)
+    weight_text = make_label("Waga:")
+    canva.create_window(100, 300, window=weight_text)
+    canva.create_window(200, 300, window=add_weight_entry)
+    value_text = make_label("Wartość:")
+    canva.create_window(100, 400, window=value_text)
+    canva.create_window(200, 400, window=add_value_entry)
+    type_text = make_label("Efekt:")
+    canva.create_window(400, 200, window=type_text)
+    canva.create_window(500, 200, window=add_type_entry)
+    add_restoring.set("Co przywraca?")
+    canva.create_window(500, 300, window=add_restoring_dropdown)
+    if potion is None:
+        add_button = tk.Button(window, text="Dodaj", command=add_potion)
+    else:
+        add_button = tk.Button(window, text="Edytuj", command=add_potion(1, potion["_id"]))
+    canva.create_window(400, 500, window=add_button)
+    back_button = tk.Button(window, text="Back", command=lambda: back_clear())
+    canva.create_window(200, 550, window=back_button)
 
 
-def add_potion_window():
-    pass
+def add_book_window(book=None):
+    delete_canva()
+    make_image()
+    if book is not None:
+        add_name_entry.insert(0, book["name"])
+        add_stat_entry.insert(0, book["mana_cost"])
+        add_description_entry.insert(0, book["description"])
+    name_text = make_label("Nazwa:")
+    canva.create_window(100, 200, window=name_text)
+    canva.create_window(200, 200, window=add_name_entry)
+    type_text = make_label("Koszt many:")
+    canva.create_window(100, 300, window=type_text)
+    canva.create_window(200, 300, window=add_stat_entry)
+    desc_text = make_label("Opis")
+    canva.create_window(100, 400, window=desc_text)
+    canva.create_window(200, 400, window=add_description_entry)
+    add_school.set("Szkoła magii")
+    canva.create_window(500, 300, window=add_school_dropdown)
+    add_level.set("Poziom")
+    canva.create_window(500, 400, window=add_level_dropdown)
+    if book is None:
+        add_button = tk.Button(window, text="Dodaj", command=add_book)
+    else:
+        add_button = tk.Button(window, text="Edytuj", command=lambda: add_book(1, book["_id"]))
+    canva.create_window(400, 500, window=add_button)
+    back_button = tk.Button(window, text="Back", command=lambda: back_clear())
+    canva.create_window(200, 550, window=back_button)
 
 
-def add_book_window():
-    pass
-
-
-def makeAddedView():
-    deleteCanva()
-    makeImage()
-    label = tk.Label(text="Dodano ^^", bg=bg_color, fg=fg_color, font=font)
+def make_added_view(mode=0):
+    delete_canva()
+    make_image()
+    if mode == 0:
+        text = "Dodano ^^"
+    elif mode == 1:
+        text = "Edytowano ^^"
+    elif mode == 2:
+        text = "Usunięto"
+    else:
+        raise exc.InvalidStateException("Zły typ operacji w funkcji make_added_view()")
+    label = tk.Label(text=text, bg=bg_color, fg=fg_color, font=font)
     canva.create_window(300, 300, window=label)
-    back_button = tk.Button(window, text="Back", command=makeCanva)
+    back_button = tk.Button(window, text="Back", command=back_clear)
     canva.create_window(200, 550, window=back_button)
 
-#koniec widoków dodawania
+
+# koniec widoków dodawania
 
 
-#funkcje dodawania
-def add_weapon():
-    stat, value, weight, name, type = 0,0,0,0,0
+# funkcje dodawania i modyfikowania
+def add_weapon(mode=0, id=None):
+    stat, value, weight, name, type = 0, 0, 0, 0, 0
     is_unique, is_onehanded = False, False
     is_everything_ok = True
-    if add_stat_entry.get() and add_stat_entry.get().isnumeric():
-        stat = (int)(add_stat_entry.get())
+    enchant1 = ""
+    enchant2 = ""
+    if add_stat_entry.get() and hp.is_number(add_stat_entry.get()):
+        stat = (float)(add_stat_entry.get())
         is_everything_ok = is_everything_ok and True
     else:
         add_stat_entry.focus_set()
         is_everything_ok = False
-    if add_value_entry.get() and add_value_entry.get().isnumeric():
-        value = (int)(add_value_entry.get())
+    if add_value_entry.get() and hp.is_number(add_value_entry.get()):
+        value = (float)(add_value_entry.get())
         is_everything_ok = is_everything_ok and True
     else:
         add_value_entry.focus_set()
         is_everything_ok = False
-    if add_weight_entry.get() and add_weight_entry.get().isnumeric():
-        weight = (int)(add_weight_entry.get())
+    if add_weight_entry.get() and hp.is_number(add_weight_entry.get()):
+        weight = (float)(add_weight_entry.get())
+        is_everything_ok = is_everything_ok and True
+    else:
+        add_weight_entry.focus_set()
+        is_everything_ok = False
+    if add_name_entry.get():
+        name = add_name_entry.get()
+        is_everything_ok = is_everything_ok and True
+    else:
+        add_name_entry.focus_set()
+        is_everything_ok = False
+    if add_type_entry.get():
+        type = add_type_entry.get()
+        is_everything_ok = is_everything_ok and True
+    else:
+        add_type_entry.focus_set()
+        is_everything_ok = False
+    if add_unique.get() == "Tak" or add_unique.get() == "Unikalny":  # pierwszy z dodawania, drugi z edycji
+        is_unique = True
+    if add_is_light.get() == "Tak" or add_unique.get() == "Jednoręczny":
+        is_onehanded = True
+
+    if add_enchant1_entry.get():
+        enchant1 = add_enchant1_entry.get()
+    if add_enchant1_entry.get():
+        enchant2 = add_enchant2_entry.get()
+
+    if is_everything_ok and mode == 0:
+        if db_func.add_weapon(name, stat, value, weight, type, is_unique, is_onehanded, enchant1, enchant2) == 1:
+            make_added_view()
+            reset_entries()
+
+    if is_everything_ok and mode == 1 and id is not None:
+        if db_func.modify_weapon(id, name, stat, value, weight, type, is_unique, is_onehanded, enchant1, enchant2) == 1:
+            make_added_view(1)
+            reset_entries()
+
+
+def add_armor(mode=0, id=None):
+    stat, value, weight, name, type = 0, 0, 0, 0, 0
+    is_unique, is_onehanded = False, False
+    is_everything_ok = True
+    enchant1 = ""
+    enchant2 = ""
+    if add_stat_entry.get() and hp.is_number(add_stat_entry.get()):
+        stat = (float)(add_stat_entry.get())
+        is_everything_ok = is_everything_ok and True
+    else:
+        add_stat_entry.focus_set()
+        is_everything_ok = False
+    if add_value_entry.get() and hp.is_number(add_value_entry.get()):
+        value = (float)(add_value_entry.get())
+        is_everything_ok = is_everything_ok and True
+    else:
+        add_value_entry.focus_set()
+        is_everything_ok = False
+    if add_weight_entry.get() and hp.is_number(add_weight_entry.get()):
+        weight = (float)(add_weight_entry.get())
         is_everything_ok = is_everything_ok and True
     else:
         add_weight_entry.focus_set()
@@ -566,10 +811,133 @@ def add_weapon():
     if add_is_light.get() == "Tak":
         is_onehanded = True
 
-    if is_everything_ok:
-       if(db_func.add_weapon(name, stat, value, weight, type, is_unique, is_onehanded) == 1):
-           makeAddedView()
+    if add_enchant1_entry.get():
+        enchant1 = add_enchant1_entry.get()
+    if add_enchant1_entry.get():
+        enchant2 = add_enchant2_entry.get()
+
+    if is_everything_ok and mode == 0:
+        if db_func.add_armor(name, stat, value, weight, type, is_unique, is_onehanded, enchant1, enchant2) == 1:
+            make_added_view()
+            reset_entries()
+
+    if is_everything_ok and mode == 1 and id is not None:
+        if db_func.modify_armor(id, name, stat, value, weight, type, is_unique, is_onehanded, enchant1, enchant2) == 1:
+            make_added_view(1)
+            reset_entries()
 
 
-makeCanva()
+def add_potion(mode=0, id=None):
+    value, weight, name = 0, 0, 0
+    effect, restore = "", ""
+    is_everything_ok = True
+    if add_value_entry.get() and hp.is_number(add_value_entry.get()):
+        value = (float)(add_value_entry.get())
+        is_everything_ok = is_everything_ok and True
+    else:
+        add_value_entry.focus_set()
+        is_everything_ok = False
+    if add_weight_entry.get() and hp.is_number(add_weight_entry.get()):
+        weight = (float)(add_weight_entry.get())
+        is_everything_ok = is_everything_ok and True
+    else:
+        add_weight_entry.focus_set()
+        is_everything_ok = False
+    if add_name_entry.get():
+        name = add_name_entry.get()
+        is_everything_ok = is_everything_ok and True
+    else:
+        add_name_entry.focus_set()
+        is_everything_ok = False
+    if add_type_entry.get():
+        effect = add_type_entry.get()
+        is_everything_ok = is_everything_ok and True
+    else:
+        add_name_entry.focus_set()
+        is_everything_ok = False
+    if add_restoring.get() != "Co przywraca?":
+        restore = add_restoring.get()
+        is_everything_ok = is_everything_ok and True
+    else:
+        is_everything_ok = False
+
+    if is_everything_ok and mode == 0:
+        if db_func.add_potion(name, restore, weight, value, effect) == 1:
+            make_added_view()
+            reset_entries()
+    elif is_everything_ok and mode == 1 and id is not None:
+        if db_func.modify_potion(id, name, restore, weight, value, effect) == 1:
+            make_added_view(1)
+            reset_entries()
+
+
+def add_book(mode=0, id=None):
+    cost, name = 0, 0
+    description, school, level = "", "", ""
+    is_everything_ok = True
+    if add_stat_entry.get() and hp.is_number(add_stat_entry.get()):
+        cost = (float)(add_stat_entry.get())
+        is_everything_ok = is_everything_ok and True
+    else:
+        add_stat_entry.focus_set()
+        is_everything_ok = False
+    if add_name_entry.get():
+        name = add_name_entry.get()
+        is_everything_ok = is_everything_ok and True
+    else:
+        add_name_entry.focus_set()
+        is_everything_ok = False
+    if add_description_entry.get():
+        description = add_description_entry.get()
+        is_everything_ok = is_everything_ok and True
+    else:
+        add_name_entry.focus_set()
+        is_everything_ok = False
+    if add_level.get() != "Poziom":
+        level = add_level.get()
+        is_everything_ok = is_everything_ok and True
+    else:
+        is_everything_ok = False
+    if add_school.get() != "Szkoła magii":
+        school = add_school.get()
+        is_everything_ok = is_everything_ok and True
+    else:
+        is_everything_ok = False
+
+    if is_everything_ok and mode == 0:
+        if db_func.add_book(name, cost, level, school, description) == 1:
+            make_added_view()
+            reset_entries()
+
+    if is_everything_ok and mode == 1 and id is not None:
+        if db_func.modify_book(id, name, cost, level, school, description) == 1:
+            make_added_view(1)
+            reset_entries()
+
+
+# koniec funkcji dodawania i modyfikowania
+
+
+# funkcje usuwania
+def delete_weapon(weapon):
+    if db_func.delete_weapon(weapon) == 1:
+        make_added_view(2)
+
+
+def delete_armor(armor):
+    if db_func.delete_armor(armor) == 1:
+        make_added_view(2)
+
+
+def delete_book(book):
+    if db_func.delete_book(book) == 1:
+        make_added_view(2)
+
+
+def delete_potion(potion):
+    if db_func.delete_potion(potion) == 1:
+        make_added_view(2)
+
+
+make_canva()
 tk.mainloop()
