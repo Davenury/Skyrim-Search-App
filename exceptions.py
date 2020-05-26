@@ -1,4 +1,4 @@
-class InvalidStateException:
+class InvalidStateException(BaseException):
     text = ''
 
     def __init__(self, text):

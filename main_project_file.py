@@ -3,58 +3,32 @@ from PIL import Image, ImageTk
 import database_functions as db_func
 import helping_functions as hp
 import exceptions as exc
-
-bg_color = "#717171"
-fg_color = "#eeeeee"
-font = ("Courier", 20)
-small_font = ("Courier", 14)
-
-# słownik przekształcający nazwy pól kolekcji do postaci czytelnej dla człowieka
-labels = {
-    "name": "Nazwa",
-    "basic_attack": "Podstawowy atak",
-    "weight": "Waga",
-    "value": "Wartość",
-    "is_unique": "Czy unikalny",
-    "enchantments": "Efekty",
-    "enchantment": "Efekty",
-    "type": "Typ",
-    "is_onehanded": "Czy jednoręczny",
-    "basic_armor": "Podstawowa wartość zbroi",
-    "is_light": "Czy lekka",
-    "type_of_restoring": "Przywraca",
-    "effect": "Efekt",
-    "description": "Opis",
-    "level": "Poziom",
-    "mana_cost": "Koszt Many",
-    "school_of_magic": "Szkoła"
-}
+import constants as const
 
 # główne okienko aplikacji
 window = tk.Tk()
 window.title("Skyrim app")
 window.geometry("800x600+50+50")
-canva = tk.Canvas(window, width=800, height=600, background=bg_color)
+canva = tk.Canvas(window, width=800, height=600, background=const.bg_color)
 canva.pack()
 load = Image.open("logo.png")
 render = ImageTk.PhotoImage(load)
-
 
 # ekran startowy
 def make_canva():
     delete_canva()
     canva.create_image(380, 70, image=render)
-    what_label = tk.Label(text="Czego dziś szukamy?", bg=bg_color, fg=fg_color, font=font)
+    what_label = tk.Label(text="Czego dziś szukamy?", bg=const.bg_color, fg=const.fg_color, font=const.font)
     canva.create_window(400, 200, window=what_label)
     weapon = tk.Button(window, text="Weapons", command=lambda: make_choice_window("weapon"))
     canva.create_window(100, 300, window=weapon)
-    armor = tk.Button(window, text="Armors", command=lambda: make_choice_window("armor"))
+    armor = tk.Button(window, text="Armors", command=lambda: make_choice_window("afasddasor"))
     canva.create_window(300, 300, window=armor)
     potion = tk.Button(window, text="Potions", command=lambda: make_potion_window())
     canva.create_window(500, 300, window=potion)
     book = tk.Button(window, text="Books", command=lambda: make_book_window())
     canva.create_window(700, 300, window=book)
-    add_label = tk.Label(text="Może coś dodać?", bg=bg_color, fg=fg_color, font=font)
+    add_label = tk.Label(text="Może coś dodać?", bg=const.bg_color, fg=const.fg_color, font=const.font)
     canva.create_window(400, 400, window=add_label)
     add_weapon = tk.Button(window, text="Dodaj broń", command=lambda: add_weapon_window())
     canva.create_window(100, 500, window=add_weapon)
@@ -115,13 +89,13 @@ def get_weight_entry_disable():
 
 
 statistic_check = tk.IntVar()
-s_check = tk.Checkbutton(window, text="Don't care", variable=statistic_check, bg=bg_color,
+s_check = tk.Checkbutton(window, text="Don't care", variable=statistic_check, bg=const.bg_color,
                          command=get_statistic_entry_disable)
 value_check = tk.IntVar()
-v_check = tk.Checkbutton(window, text="Don't care", variable=value_check, bg=bg_color,
+v_check = tk.Checkbutton(window, text="Don't care", variable=value_check, bg=const.bg_color,
                          command=get_value_entry_disable)
 weight_check = tk.IntVar()
-w_check = tk.Checkbutton(window, text="Don't care", variable=weight_check, bg=bg_color,
+w_check = tk.Checkbutton(window, text="Don't care", variable=weight_check, bg=const.bg_color,
                          command=get_weight_entry_disable)
 
 
@@ -158,9 +132,9 @@ def show(what_kind_of, weapons, func):
         canva.create_window(450, 480, window=details_button)
         make_edit_and_delete_buttons(what_kind_of, record)
     except StopIteration:
-        new_label = tk.Label(window, text="Nie ma więcej \nprzedmiotów pasujących \ndo Twoich wymagań", font=font,
-                             fg=fg_color,
-                             bg=bg_color)
+        new_label = tk.Label(window, text="Nie ma więcej \nprzedmiotów pasujących \ndo Twoich wymagań", font=const.font,
+                             fg=const.fg_color,
+                             bg=const.bg_color)
         canva.create_window(400, 180, window=new_label)
     back_button = ""
     if what_kind_of == "armor" or what_kind_of == "weapon":
@@ -176,30 +150,33 @@ def show(what_kind_of, weapons, func):
 def show_details(one_weapon):
     y_offset = 25
     offset_of_enchants = 0
-    i = 0
+    enchant_label = ""
+    sth = 0
+    enchant_was_there = False
     for idx, label in enumerate(one_weapon):
+        sth += 1
+        if label == "enchantments" or label == "enchantment":
+            enchant_label = label
         if label != "_id" and label != "enchantments" and label != "enchantment":
-            new_label = tk.Label(window, text="{}: ".format(labels[label]), font=small_font, fg=fg_color, bg=bg_color)
-            new_label2 = tk.Label(window, text="{}".format(one_weapon[label]), font=small_font, fg=fg_color,
-                                  bg=bg_color)
+            new_label = tk.Label(window, text="{}: ".format(const.labels[label]), font=const.small_font, fg=const.fg_color, bg=const.bg_color)
+            new_label2 = tk.Label(window, text="{}".format(one_weapon[label]), font=const.small_font, fg=const.fg_color,
+                                  bg=const.bg_color)
             canva.create_window(150, 180 + (idx + offset_of_enchants) * y_offset, window=new_label)
             canva.create_window(450, 180 + (idx + offset_of_enchants) * y_offset, window=new_label2)
-        elif label == "enchantments" or label == "enchantment":
-            new_label = tk.Label(window, text="{}: ".format(labels[label]), font=small_font, fg=fg_color,
-                                 bg=bg_color)
-            canva.create_window(150, 180 + (idx + offset_of_enchants) * y_offset, window=new_label)
-            for i, enchant in enumerate(one_weapon[label]):
-                offset_of_enchants = 1
-                new_label2 = tk.Label(window, text="{}".format(enchant), font=small_font, fg=fg_color,
-                                      bg=bg_color)
-                canva.create_window(550, 180 + (idx + i + offset_of_enchants) * y_offset, window=new_label2)
-            else:
-                offset_of_enchants += i + 1
-                i += 1
-            if i == 0:
-                new_label2 = tk.Label(window, text="Brak", font=small_font, fg=fg_color,
-                                      bg=bg_color)
-                canva.create_window(450, 180 + (idx + i + offset_of_enchants) * y_offset, window=new_label2)
+    sth += 1
+    new_label = tk.Label(window, text="{}: ".format(const.labels[enchant_label]), font=const.small_font, fg=const.fg_color,
+                         bg=const.bg_color)
+    canva.create_window(150, 180 + sth * y_offset, window=new_label)
+    for i, enchant in enumerate(one_weapon[enchant_label]):
+        new_label2 = tk.Label(window, text="{}".format(enchant), font=const.small_font, fg=const.fg_color,
+                              bg=const.bg_color)
+        canva.create_window(550, 180 + (sth + i) * y_offset, window=new_label2)
+        sth += 1
+        enchant_was_there = True
+    if not enchant_was_there:
+        new_label2 = tk.Label(window, text="Brak", font=const.small_font, fg=const.fg_color,
+                              bg=const.bg_color)
+        canva.create_window(550, 180 + sth * y_offset, window=new_label2)
 
 
 def search_for(what_kind_of):
@@ -234,7 +211,7 @@ def search_for(what_kind_of):
     if weapon is not None:
         show(what_kind_of, weapon, show_details)
     else:
-        new_label = tk.Label(window, text="Brak takiego przedmiotu!", font=font, fg=fg_color, bg=bg_color)
+        new_label = tk.Label(window, text="Brak takiego przedmiotu!", font=const.font, fg=const.fg_color, bg=const.bg_color)
         canva.create_window(380, 200, window=new_label)
 
     back_button = tk.Button(window, text="Back", command=lambda: make_choice_window(what_kind_of))
@@ -255,10 +232,10 @@ def show_details_for_books(book):
         if label == "description":
             description_offset = 90
         if label != "_id":
-            new_label = tk.Label(window, text="{}: ".format(labels[label]), font=small_font, fg=fg_color,
-                                 bg=bg_color)
-            new_label2 = tk.Label(window, text="{}".format(book[label]), font=small_font, fg=fg_color,
-                                  bg=bg_color)
+            new_label = tk.Label(window, text="{}: ".format(const.labels[label]), font=const.small_font, fg=const.fg_color,
+                                 bg=const.bg_color)
+            new_label2 = tk.Label(window, text="{}".format(book[label]), font=const.small_font, fg=const.fg_color,
+                                  bg=const.bg_color)
             canva.create_window(150, 180 + idx * y_offset + description_offset, window=new_label)
             canva.create_window(450, 180 + idx * y_offset + description_offset, window=new_label2)
 
@@ -284,7 +261,7 @@ def search_for_books():
     if books is not None:
         show("book", books, show_details_for_books)
     else:
-        new_label = tk.Label(window, text="Brak takiego przedmiotu!", font=font, fg=fg_color, bg=bg_color)
+        new_label = tk.Label(window, text="Brak takiego przedmiotu!", font=const.font, fg=const.fg_color, bg=const.bg_color)
         canva.create_window(380, 200, window=new_label)
 
     back_button = tk.Button(window, text="Back", command=lambda: make_book_window())
@@ -304,10 +281,10 @@ def show_details_for_potions(potion):
         if label == "effect":
             label_offset = 1
         if label != "_id":
-            new_label = tk.Label(window, text="{}: ".format(labels[label]), font=small_font, fg=fg_color,
-                                 bg=bg_color)
-            new_label2 = tk.Label(window, text="{}".format(potion[label]), font=small_font, fg=fg_color,
-                                  bg=bg_color)
+            new_label = tk.Label(window, text="{}: ".format(const.labels[label]), font=const.small_font, fg=const.fg_color,
+                                 bg=const.bg_color)
+            new_label2 = tk.Label(window, text="{}".format(potion[label]), font=const.small_font, fg=const.fg_color,
+                                  bg=const.bg_color)
             canva.create_window(150, 180 + (idx + label_offset) * y_offset, window=new_label)
             canva.create_window(450, 180 + (idx + label_offset) * y_offset, window=new_label2)
 
@@ -335,7 +312,8 @@ def search_for_potions():
     if potions is not None:
         show("potion", potions, show_details_for_potions)
     else:
-        new_label = tk.Label(window, text="Brak takiego przedmiotu!", font=font, fg=fg_color, bg=bg_color)
+        new_label = tk.Label(window, text="Brak takiego przedmiotu!", font=const.font,
+                             fg=const.fg_color, bg=const.bg_color)
         canva.create_window(380, 200, window=new_label)
 
     back_button = tk.Button(window, text="Back", command=lambda: make_potion_window())
@@ -346,7 +324,7 @@ def search_for_potions():
 
 
 def make_label(text):
-    return tk.Label(window, text=text, bg=bg_color, fg=fg_color)
+    return tk.Label(window, text=text, bg=const.bg_color, fg=const.fg_color)
 
 
 # widoki wyborów
@@ -366,9 +344,9 @@ def make_choice_window(what_kind_of):
     make_image()
     label = ""
     if what_kind_of == "weapons":
-        label = tk.Label(text="Weapons", bg=bg_color, fg=fg_color, font=font)
+        label = tk.Label(text="Weapons", bg=const.bg_color, fg=const.fg_color, font=const.font)
     elif what_kind_of == "armor":
-        label = tk.Label(text="Armors", bg=bg_color, fg=fg_color, font=font)
+        label = tk.Label(text="Armors", bg=const.bg_color, fg=const.fg_color, font=const.font)
     min_v_text = make_label("Min value")
     max_v_text = make_label("Max value")
     min_w_text = make_label("Min weight")
@@ -411,7 +389,7 @@ def make_potion_window():
     x = 200
     y = 300
     z = 400
-    label = tk.Label(text="Potions", bg=bg_color, fg=fg_color, font=font)
+    label = tk.Label(text="Potions", bg=const.bg_color, fg=const.fg_color, font=const.font)
     min_v_text = make_label("Min value")
     max_v_text = make_label("Max value")
     search = tk.Button(window, text="Search!", command=search_for_potions)
@@ -446,7 +424,7 @@ def make_book_window():
     x = 200
     y = 300
     z = 400
-    label = tk.Label(text="Potions", bg=bg_color, fg=fg_color, font=font)
+    label = tk.Label(text="Potions", bg=const.bg_color, fg=const.fg_color, font=const.font)
     min_v_text = make_label("Koszt many min")
     max_v_text = make_label("Koszt many max")
     search = tk.Button(window, text="Search!", command=search_for_books)
@@ -703,7 +681,7 @@ def make_added_view(mode=0):
         text = "Usunięto"
     else:
         raise exc.InvalidStateException("Zły typ operacji w funkcji make_added_view()")
-    label = tk.Label(text=text, bg=bg_color, fg=fg_color, font=font)
+    label = tk.Label(text=text, bg=const.bg_color, fg=const.fg_color, font=const.font)
     canva.create_window(300, 300, window=label)
     back_button = tk.Button(window, text="Back", command=back_clear)
     canva.create_window(200, 550, window=back_button)
