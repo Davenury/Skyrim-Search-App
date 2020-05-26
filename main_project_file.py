@@ -22,7 +22,7 @@ def make_canva():
     canva.create_window(400, 200, window=what_label)
     weapon = tk.Button(window, text="Weapons", command=lambda: make_choice_window("weapon"))
     canva.create_window(100, 300, window=weapon)
-    armor = tk.Button(window, text="Armors", command=lambda: make_choice_window("afasddasor"))
+    armor = tk.Button(window, text="Armors", command=lambda: make_choice_window("armor"))
     canva.create_window(300, 300, window=armor)
     potion = tk.Button(window, text="Potions", command=lambda: make_potion_window())
     canva.create_window(500, 300, window=potion)
