@@ -1,1 +1,2 @@
-Skyrim items searching app for Database project ^^
+Dokumentacja projektu znajduje się w pliku Skyrim-Search-App Dokumentajca.pdf
+Enjoy ^^
