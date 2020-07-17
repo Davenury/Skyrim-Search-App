@@ -6,7 +6,7 @@ colorama==0.4.3
 cycler==0.10.0
 decorator==4.4.1
 defusedxml==0.6.0
-Django==3.0.4
+Django==3.0.7
 django-hamlpy==1.2
 django-twitter-bootstrap==3.3.0
 dnspython==1.16.0
